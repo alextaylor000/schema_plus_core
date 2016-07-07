@@ -83,21 +83,23 @@ module SchemaPlus
 
         def indexes(table, _)
           SchemaMonkey::Middleware::Dumper::Indexes.start(dumper: self, connection: @connection, dump: @dump, table: @dump.tables[table]) do |env|
-            stream = StringIO.new
-            super env.table.name, stream
-            env.table.indexes += stream.string.split("\n").map { |string|
-              m = string.strip.match %r{
-              ^
-              add_index \s*
-                [:'"](?<table>[^'"\s]+)['"]? \s* , \s*
-                (?<columns>.*) \s*
-                name: \s* [:'"](?<name>[^'"\s]+)['"]? \s*
-                (, \s* (?<options>.*))?
-                $
-              }x
-              columns = m[:columns].tr(%q{[]'":}, '').strip.split(/\s*,\s*/)
-              SchemaDump::Table::Index.new name: m[:name], columns: columns, options: eval("{#{m[:options]}}")
-            }
+            if env.table
+              stream = StringIO.new
+              super env.table.name, stream
+              env.table.indexes += stream.string.split("\n").map { |string|
+                m = string.strip.match %r{
+                ^
+                add_index \s*
+                  [:'"](?<table>[^'"\s]+)['"]? \s* , \s*
+                  (?<columns>.*) \s*
+                  name: \s* [:'"](?<name>[^'"\s]+)['"]? \s*
+                  (, \s* (?<options>.*))?
+                  $
+                }x
+                columns = m[:columns].tr(%q{[]'":}, '').strip.split(/\s*,\s*/)
+                SchemaDump::Table::Index.new name: m[:name], columns: columns, options: eval("{#{m[:options]}}")
+              }
+            end
           end
         end
       end
